@@ -2,6 +2,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\BlogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +16,16 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+
+Route::post('register',[UserController::class,'register']);
+Route::post('login',[UserController::class,'login']);
+Route::get('getUser',[UserController::class,'getUser']);
+Route::post('addBlog',[BlogController::class,'addBlog']);
+Route::get('listBlogs',[BlogController::class,'listBlogs']);
+Route::put('editBlog',[BlogController::class,'editBlog']);
+Route::post('deleteBlog',[BlogController::class,'deleteBlog']);
+Route::get('allBlogs',[BlogController::class,'allBlogs']);
