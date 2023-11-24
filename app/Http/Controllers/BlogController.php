@@ -44,6 +44,7 @@ class BlogController extends Controller
             "data" => $blogLists
         ]);
     }
+    
     function listBlogs(Request $req) {
         
         $userToken = $req->header('Authorization');
