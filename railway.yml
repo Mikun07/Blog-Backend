@@ -1,0 +1,17 @@
+version: 1
+services:
+  web:
+    # Specify the Dockerfile for Laravel (if using a custom Dockerfile)
+    dockerfile: Dockerfile
+    # Specify the build commands for your Laravel application
+    build:
+      env:
+        # Set environment variables required for the build process
+        NODE_ENV: production
+      # Define the build commands to install dependencies, run migrations, etc.
+      - composer install --no-interaction --optimize-autoloader
+      - php artisan migrate --force
+    # Define the run command to start your Laravel application
+    run:
+      # Specify the command to start the Laravel server (change as needed)
+      web: php artisan serve 
