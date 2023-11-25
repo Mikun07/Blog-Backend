@@ -20,6 +20,15 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
         });
+
+        Schema::create('blogs', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->string('title');
+            $table->string('content');
+            $table->string('author');
+            $table->string('date');
+        });
     }
 
     /**
@@ -28,5 +37,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
+        Schema::dropIfExists('blogs');
     }
 };
