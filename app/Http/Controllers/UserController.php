@@ -38,14 +38,20 @@ class UserController extends Controller
             while(strlen($token) < $length){
                 $token .= $characters[rand(0, strlen($characters) - 1)];
             }
-            return [
+            return response()->json([
+                "success" => true,
+                "message" => "Login Success",
                 "user" => $user,
                 "token" => $prefix.$token
-            ]; // Return user details if email and password match
+            ], 200);
         }
     
         // If either email or password is incorrect, return error
-        return ["error" => "Email or password is invalid"];
+        return response()->json([
+            "success" => false,
+            "message" => "Email or password is invalid",
+            "data" => null
+        ], 200);
     }
 
     function getUser(Request $req) {
