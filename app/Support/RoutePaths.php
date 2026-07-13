@@ -10,5 +10,6 @@ final class RoutePaths
 
     private function __construct()
     {
+        throw new \LogicException('RoutePaths is a constants-only utility class.');
     }
 }
