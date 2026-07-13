@@ -8,6 +8,7 @@ The project is a portfolio backend intended to demonstrate backend API design, d
 
 - User registration, login, logout, and current user lookup
 - Laravel Sanctum bearer token authentication
+- Admin role for site-wide management
 - Create, publish, archive, update, and delete blog posts
 - Public published post listing with search, category, tag, and pagination filters
 - Authenticated author dashboard listing for all own posts
@@ -16,6 +17,7 @@ The project is a portfolio backend intended to demonstrate backend API design, d
 - Guest and authenticated comment submission
 - Pending comment workflow
 - Owner-only comment approval, rejection, and deletion
+- Admin dashboard metrics, user role management, and global blog/comment moderation
 - Legacy endpoint compatibility for the original route names
 
 ## Technology Stack
@@ -34,6 +36,7 @@ The application follows Laravel's MVC structure with Form Request validation.
 
 - `routes/api.php` defines public, authenticated, and legacy API routes.
 - `app/Http/Controllers/UserController.php` handles authentication.
+- `app/Http/Controllers/AdminController.php` handles admin dashboards, role management, and global moderation.
 - `app/Http/Controllers/BlogController.php` handles blog publishing, filtering, comments, and moderation.
 - `app/Http/Controllers/CategoryController.php` handles category listing and creation.
 - `app/Http/Controllers/TagController.php` handles tag listing and creation.
@@ -152,6 +155,7 @@ The project has been filed against the engineering framework in [docs/ENGINEERIN
 ## Known Limitations
 
 - Authorization should be moved into Laravel policies or gates.
+- The first admin account must be assigned directly in the database, seed data, or a future setup command.
 - Existing legacy blog rows may need a backfill migration for `user_id`, `slug`, and publish status.
 - Existing deployed databases created before this upgrade may need a manual content column conversion to `text`.
 - Production logging, monitoring, backups, and incident handling are not yet complete.
@@ -161,6 +165,7 @@ The project has been filed against the engineering framework in [docs/ENGINEERIN
 - Expand API feature tests for authorization and moderation paths.
 - Add OpenAPI documentation.
 - Add rate-limit behavior tests for authentication routes.
+- Add a first-admin setup command or seed workflow.
 - Add author profile endpoints.
 - Add rich text or Markdown rendering support.
 - Add CI quality gates for PHPUnit and Laravel Pint.

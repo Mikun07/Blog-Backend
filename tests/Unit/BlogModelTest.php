@@ -49,6 +49,15 @@ class BlogModelTest extends TestCase
         $this->assertSame('archived', Blogs::STATUS_ARCHIVED);
     }
 
+    public function test_user_admin_role_identifies_admin_access(): void
+    {
+        $admin = new User(['role' => User::ROLE_ADMIN]);
+        $author = new User(['role' => User::ROLE_AUTHOR]);
+
+        $this->assertTrue($admin->isAdmin());
+        $this->assertFalse($author->isAdmin());
+    }
+
     public function test_blog_model_allows_full_blog_fields(): void
     {
         $blog = new Blogs();

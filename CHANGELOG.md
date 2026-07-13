@@ -16,8 +16,10 @@ This project uses semantic versioning once public releases begin.
 - Added Railway config-as-code file in `railway.toml`.
 - Added Sanctum-backed registration, login, logout, and current user endpoints.
 - Added full blog publishing fields, categories, tags, and comments.
+- Added admin role support, admin-only middleware, dashboard metrics, user role management, and global moderation endpoints.
 - Added feature tests for registration, publishing, and guest comment validation.
 - Added feature tests for owner-only blog changes, comment moderation, and invalid blog payloads.
+- Added feature tests for admin dashboard access, role promotion, last-admin protection, blog status moderation, and comment moderation.
 - Added unit tests for blog ownership, model contracts, hidden comment fields, and request validation rules.
 - Added a CI coverage job that uploads PHPUnit Clover coverage.
 

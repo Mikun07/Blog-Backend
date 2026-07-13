@@ -2,7 +2,7 @@
 
 ## Project Summary
 
-Blog Backend is a Laravel 10 API for a full blog platform. It supports author authentication, post publishing workflows, categories, tags, comments, and owner-only moderation.
+Blog Backend is a Laravel 10 API for a full blog platform. It supports author authentication, post publishing workflows, categories, tags, comments, owner-only moderation, and admin-level site management.
 
 ## Problem Definition
 
@@ -11,6 +11,7 @@ Target users need a backend service that lets authors manage blog content and le
 ## Stakeholders
 
 - Authors: register, sign in, draft, publish, update, archive, and delete posts.
+- Admins: manage user roles, review all posts, moderate all comments, and inspect dashboard metrics.
 - Readers: browse published posts and submit comments.
 - Frontend client: consumes authentication, blog, category, tag, and comment APIs.
 - Repository reviewer: evaluates setup quality, architecture decisions, and test coverage.
@@ -30,6 +31,9 @@ Target users need a backend service that lets authors manage blog content and le
 | FR-008 | Posts can be assigned categories and tags. | Implemented |
 | FR-009 | Readers can submit comments. | Implemented |
 | FR-010 | Authors can approve, reject, or delete comments on their posts. | Implemented |
+| FR-011 | Admins can view dashboard metrics. | Implemented |
+| FR-012 | Admins can manage user roles. | Implemented |
+| FR-013 | Admins can moderate all posts and comments. | Implemented |
 
 ## Non-Functional Requirements
 
@@ -56,6 +60,7 @@ Decision rationale:
 Architecture risks:
 
 - Ownership checks still live in controllers instead of policies.
+- Admin access checks live in middleware and controller logic instead of policies.
 - The legacy `Blogs` model name is plural because it comes from the original project.
 - Existing legacy rows may need a backfill for `user_id`, `slug`, `status`, and `published_at`.
 
@@ -68,6 +73,7 @@ Move blog and comment ownership checks into Laravel policies and introduce API r
 Current entities:
 
 - `users`: author identity and login credentials.
+- `users.role`: author or admin access level.
 - `blogs`: post content, slug, status, publish date, owner, category, and legacy author field.
 - `categories`: blog category taxonomy.
 - `tags`: reusable tag taxonomy.
@@ -93,10 +99,12 @@ Backend strengths:
 - Form Request classes validate registration, login, blog creation, blog updates, and comments.
 - Public and authenticated routes are separated.
 - Owner checks protect post updates, post deletion, comment moderation, and comment deletion.
+- Admin middleware protects site-wide management routes.
 - Legacy route names remain available for older clients.
 
 Backend risks:
 
+- Admin bootstrap process is manual because there is no first-admin setup command yet.
 - Authentication rate limits need automated tests and production threshold review.
 - Response formatting is controller-driven rather than resource-driven.
 - Comment submission supports guests but moderation workflows need broader test coverage.
@@ -112,6 +120,7 @@ Current security status: improved but not production complete.
 High-priority remaining risks:
 
 - Authorization should move from controllers to policies.
+- Admin bootstrap should be controlled through a seed, command, or documented deployment step.
 - Authentication rate-limit thresholds should be reviewed before production use.
 - Existing deployment secrets should be reviewed and rotated where needed.
 - Existing data should be backfilled before a public deployment.
@@ -131,12 +140,14 @@ Current tests:
 - Feature tests for owner-only update and delete behavior.
 - Feature test for comment moderation.
 - Feature test for invalid blog payload validation.
+- Feature tests for admin dashboard access, role promotion, last-admin protection, global blog moderation, and global comment moderation.
 
 Quality gaps:
 
 - No unit tests for policy classes yet because policies have not been introduced.
 - No category and tag endpoint tests yet.
 - No non-owner comment moderation test yet.
+- No test for first-admin setup because no setup workflow exists yet.
 - No CORS or rate-limit behavior tests yet.
 - Coverage is collected in CI, but no minimum coverage threshold is enforced yet.
 
@@ -188,6 +199,7 @@ Remaining gaps before public portfolio sharing:
 Do not treat this project as production ready until:
 
 - Existing blog rows are backfilled.
+- At least one admin user exists through a controlled setup process.
 - Existing deployed database schemas are reviewed for content column type.
 - Authorization policies are implemented.
 - CI runs tests successfully.
@@ -196,11 +208,12 @@ Do not treat this project as production ready until:
 
 ## Recommended Build Order
 
-1. Add policies for blog and comment authorization.
-2. Backfill existing blog rows.
-3. Review deployed database column types.
-4. Add API resources for response consistency.
-5. Add category, tag, non-owner moderation, and rate-limit behavior tests.
-6. Add a coverage threshold once the first CI coverage result is reviewed.
-7. Run a Railway deployment rehearsal.
-8. Prepare interview notes that explain the auth, data model, and moderation decisions.
+1. Add policies for blog, comment, and admin authorization.
+2. Add a first-admin setup command or seed workflow.
+3. Backfill existing blog rows.
+4. Review deployed database column types.
+5. Add API resources for response consistency.
+6. Add category, tag, non-owner moderation, and rate-limit behavior tests.
+7. Add a coverage threshold once the first CI coverage result is reviewed.
+8. Run a Railway deployment rehearsal.
+9. Prepare interview notes that explain the auth, admin, data model, and moderation decisions.

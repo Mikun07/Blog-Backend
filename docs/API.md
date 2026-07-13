@@ -291,3 +291,120 @@ Authorization: Bearer <token>
 ```
 
 Only the blog owner can delete comments on their blog.
+
+## Admin
+
+Admin routes require:
+
+```http
+Authorization: Bearer <admin-token>
+```
+
+The authenticated user must have `role` set to `admin`.
+
+### Dashboard Metrics
+
+```http
+GET /api/admin/dashboard
+```
+
+Returns user, blog, comment, category, and tag counts.
+
+### List Users
+
+```http
+GET /api/admin/users
+```
+
+Optional query parameters:
+
+- `role`
+- `per_page`
+
+### Update User Role
+
+```http
+PATCH /api/admin/users/{id}/role
+```
+
+Request:
+
+```json
+{
+  "role": "admin"
+}
+```
+
+Allowed roles:
+
+- `author`
+- `admin`
+
+The API rejects changes that would leave the system with zero admin users.
+
+### List All Blogs
+
+```http
+GET /api/admin/blogs
+```
+
+Optional query parameters:
+
+- `status`
+- `search`
+- `per_page`
+
+### Update Blog Status
+
+```http
+PATCH /api/admin/blogs/{id}/status
+```
+
+Request:
+
+```json
+{
+  "status": "archived"
+}
+```
+
+### Delete Blog
+
+```http
+DELETE /api/admin/blogs/{id}
+```
+
+Deletes any blog as an admin action.
+
+### List All Comments
+
+```http
+GET /api/admin/comments
+```
+
+Optional query parameters:
+
+- `status`
+- `per_page`
+
+### Update Comment Status
+
+```http
+PATCH /api/admin/comments/{id}
+```
+
+Request:
+
+```json
+{
+  "status": "approved"
+}
+```
+
+### Delete Comment
+
+```http
+DELETE /api/admin/comments/{id}
+```
+
+Deletes any comment as an admin action.
