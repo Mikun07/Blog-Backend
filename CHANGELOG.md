@@ -6,7 +6,9 @@ This project will use semantic versioning once public releases begin.
 
 ## [Unreleased]
 
-- No unreleased product changes.
+### Changed
+
+- Refreshed README, deployment, security, project overview, engineering readiness, and OpenAPI documentation to match the current backend feature set.
 
 ## Product Timeline
 

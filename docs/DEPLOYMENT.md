@@ -39,6 +39,10 @@ APP_KEY=base64:replace-with-generated-key
 APP_DEBUG=false
 APP_URL=https://replace-with-railway-domain
 CORS_ALLOWED_ORIGINS=https://replace-with-frontend-domain
+ADMIN_NAME="Ayomikun Olaleye"
+ADMIN_USERNAME=ayomikunolaleye
+ADMIN_EMAIL=ayomikunolaleye@gmail.com
+ADMIN_PASSWORD=replace-with-secure-admin-password
 
 DB_CONNECTION=mysql
 DB_HOST=replace-with-railway-mysql-host
@@ -61,6 +65,8 @@ php artisan key:generate --show
 
 Do not commit the generated value.
 
+`ADMIN_PASSWORD` is required if the admin seed workflow is used. Wrap values that contain special characters such as `#` in quotes.
+
 ## Build Strategy
 
 Railway should detect the Laravel application and build it with Railpack. The repository includes:
@@ -73,6 +79,16 @@ builder = "RAILPACK"
 No custom `startCommand` is set so Railway can use its Laravel runtime defaults.
 
 The Docker files in this repository are for optional local development only. The current Railway deployment path should continue to use Railpack rather than a Docker image unless the deployment architecture changes.
+
+## Uploaded Media Storage
+
+Post cover image uploads currently use Laravel's `public` filesystem disk and are exposed through `/storage/...` URLs. For local development, run:
+
+```bash
+php artisan storage:link
+```
+
+Before relying on uploads in production, configure durable storage such as object storage or a persistent platform volume. The default application filesystem should not be treated as durable production media storage on ephemeral hosts.
 
 ## Migration Strategy
 
@@ -124,6 +140,7 @@ Blockers:
 - No production monitoring or alerting has been defined.
 - Database backup and restore procedure has not been tested.
 - Existing data may need a one-time backfill for post slugs, ownership, and publish status.
+- Uploaded media storage needs a durable production strategy before image uploads are treated as permanent content.
 
 The application can be deployed for portfolio demonstration after these risks are accepted and documented.
 

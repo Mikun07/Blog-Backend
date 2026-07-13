@@ -3,7 +3,7 @@
   "info": {
     "title": "Blog Backend API",
     "version": "1.0.0",
-    "description": "Laravel 10 API for authentication, blog publishing, comments, taxonomy, and admin management. Authenticated routes use Laravel Sanctum bearer tokens."
+    "description": "Laravel 10 API for authentication, profile updates, blog publishing, image uploads, notifications, comments, taxonomy, and admin management. Authenticated routes use Laravel Sanctum bearer tokens."
   },
   "servers": [
     {
@@ -353,7 +353,7 @@
           "Blogs"
         ],
         "summary": "Create blog",
-        "description": "Creates a blog for the authenticated author.",
+        "description": "Creates a blog for the authenticated author. Use multipart/form-data when uploading cover_image.",
         "security": [
           {
             "bearerAuth": []
@@ -363,6 +363,11 @@
           "required": true,
           "content": {
             "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlogWriteRequest"
+              }
+            },
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/BlogWriteRequest"
               }
@@ -1128,7 +1133,7 @@
           "Admin"
         ],
         "summary": "Create blog as admin",
-        "description": "Creates a blog for the authenticated admin or for a selected user_id.",
+        "description": "Creates a blog for the authenticated admin or for a selected user_id. Use multipart/form-data when uploading cover_image.",
         "security": [
           {
             "bearerAuth": []
@@ -1138,6 +1143,11 @@
           "required": true,
           "content": {
             "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminBlogCreateRequest"
+              }
+            },
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/AdminBlogCreateRequest"
               }
@@ -1665,6 +1675,11 @@
         "required": true,
         "content": {
           "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BlogWriteRequest"
+            }
+          },
+          "multipart/form-data": {
             "schema": {
               "$ref": "#/components/schemas/BlogWriteRequest"
             }

@@ -2,15 +2,17 @@
 
 ## Supported Status
 
-This project is currently a portfolio backend. It has token authentication, request validation, ownership checks, admin-only routes, and restricted CORS configuration, but it still needs additional hardening before handling sensitive production traffic.
+This project is currently a portfolio backend. It has token authentication, request validation, ownership checks, admin-only routes, profile password guardrails, suspended-account blocking, uploaded-image validation, and restricted CORS configuration, but it still needs additional hardening before handling sensitive production traffic.
 
 ## Current Security Limitations
 
 - Authorization decisions are implemented in controllers rather than policies.
-- Admin access depends on the `role` column and should be backed by a controlled first-admin setup process.
+- Admin access depends on the `role` column and should eventually be backed by a controlled first-admin setup command or audited deployment workflow. The current workflow uses `AdminUserSeeder` and requires `ADMIN_PASSWORD`.
 - Existing legacy blog rows may not have `user_id`, `slug`, `status`, or `published_at` populated until backfilled.
 - Blog ownership keeps the legacy `author` column for compatibility while also adding `user_id`.
 - Existing deployed databases created before this upgrade may need a manual content column conversion to `text`.
+- Uploaded cover images are validated by type and size, but the current public filesystem storage is not a durable production media strategy on ephemeral hosts.
+- Notification records may include post, author, and category summary data; avoid placing private data in notification payloads.
 - Authentication routes use an explicit rate limit, but production thresholds should be reviewed after traffic patterns are known.
 
 ## Secret Handling
@@ -29,11 +31,12 @@ The previous `app.yaml` contained an application key. If that value was ever use
 ## Recommended Security Roadmap
 
 1. Move blog, comment, and admin authorization into Laravel policies.
-2. Add a controlled first-admin setup command or seed workflow.
-3. Add a data backfill migration for existing blog rows.
-4. Add a deployment migration plan for databases that already ran the old blog schema.
-5. Add automated tests for unauthorized access, invalid payloads, rate limiting, and owner-only operations.
-6. Add dependency scanning to CI.
+2. Add a controlled first-admin setup command to replace manual seed configuration.
+3. Configure durable production storage for uploaded media.
+4. Add a data backfill migration for existing blog rows.
+5. Add a deployment migration plan for databases that already ran the old blog schema.
+6. Add automated tests for unauthorized access, invalid payloads, rate limiting, CORS, and owner-only operations.
+7. Add dependency scanning to CI.
 
 ## Reporting Security Issues
 

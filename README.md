@@ -6,12 +6,14 @@ The project is a portfolio backend intended to demonstrate backend API design, d
 
 ## Features
 
-- User registration, login, logout, and current user lookup
+- User registration, login, logout, current user lookup, and profile updates
 - Laravel Sanctum bearer token authentication
 - Admin role for site-wide management
 - Create, publish, archive, update, and delete blog posts
+- Upload and replace post cover images
 - Public published post listing with search, category, tag, and pagination filters
 - Authenticated author dashboard listing for all own posts
+- Database notifications for newly published posts
 - Category creation and listing
 - Tag creation and listing
 - Guest and authenticated comment submission
@@ -39,9 +41,11 @@ The application follows Laravel's MVC structure with Form Request validation.
 - `app/Http/Controllers/UserController.php` handles authentication.
 - `app/Http/Controllers/AdminController.php` handles admin dashboards, role management, and global moderation.
 - `app/Http/Controllers/BlogController.php` handles blog publishing, filtering, comments, and moderation.
+- `app/Http/Controllers/NotificationController.php` handles authenticated notification inbox actions.
 - `app/Http/Controllers/CategoryController.php` handles category listing and creation.
 - `app/Http/Controllers/TagController.php` handles tag listing and creation.
 - `app/Http/Requests` contains request validation rules.
+- `app/Services` contains small domain services for blog image storage and publish notifications.
 - `app/Models/User.php` represents application users.
 - `app/Models/Blogs.php` represents blog posts.
 - `app/Models/Category.php`, `app/Models/Tag.php`, and `app/Models/Comment.php` represent supporting blog domain concepts.
@@ -137,6 +141,12 @@ php artisan serve
 
 The API will be available at `http://127.0.0.1:8000/api`.
 
+For uploaded cover images, create Laravel's public storage link:
+
+```bash
+php artisan storage:link
+```
+
 ## Optional Docker Setup
 
 Docker is not required for Railway deployment, but it is available for local development when you want PHP and MySQL isolated from your machine.
@@ -175,7 +185,7 @@ composer test
 composer test:coverage
 ```
 
-The test suite includes unit tests for model ownership and validation rules, plus feature tests for registration, publishing, owner-only edit and delete, comment moderation, guest comment validation, and invalid blog payloads.
+The test suite includes unit tests for model ownership and validation rules, plus feature tests for registration, profile updates, publishing, image uploads, notifications, owner-only edit and delete, comment moderation, admin workflows, documentation routes, guest comment validation, and invalid payloads.
 
 Coverage is generated in CI on PHP 8.3 and uploaded as a `coverage.xml` artifact.
 
@@ -203,6 +213,7 @@ The project has been filed against the engineering framework in [docs/ENGINEERIN
 - `ADMIN_PASSWORD` must be configured before seed data can provision the first admin account.
 - Existing legacy blog rows may need a backfill migration for `user_id`, `slug`, and publish status.
 - Existing deployed databases created before this upgrade may need a manual content column conversion to `text`.
+- Uploaded cover images currently use Laravel's public filesystem disk; production deployments should configure persistent object storage or another durable upload strategy.
 - Production logging, monitoring, backups, and incident handling are not yet complete.
 
 ## Future Improvements
@@ -211,7 +222,7 @@ The project has been filed against the engineering framework in [docs/ENGINEERIN
 - Keep OpenAPI documentation synchronized with API changes.
 - Add rate-limit behavior tests for authentication routes.
 - Add a first-admin setup command for interactive production provisioning.
-- Add author profile endpoints.
+- Add durable object storage for uploaded media in production.
 - Add rich text or Markdown rendering support.
 - Add CI quality gates for PHPUnit and Laravel Pint.
 
