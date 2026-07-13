@@ -1,12 +1,23 @@
-name: pull requests
+name: Pull Request Checks
 
 on:
-  pull_request_target:
-    types: [opened]
+  pull_request:
 
 permissions:
-  pull-requests: write
+  contents: read
 
 jobs:
-  uneditable:
-    uses: laravel/.github/.github/workflows/pull-requests.yml@main
+  readiness:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify project documentation exists
+        run: |
+          test -f README.md
+          test -f docs/API.md
+          test -f docs/DEPLOYMENT.md
+          test -f docs/ENGINEERING_READINESS.md
+          test -f SECURITY.md

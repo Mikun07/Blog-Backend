@@ -9,5 +9,5 @@ runtime_config:
 
 env_variables:
   APP_LOG: errorLog
-  APP_KEY: base64:XsPn/naY3zKoc4wj9kyl0N77cdpzQmtNtrgaNbK538Q=
+  APP_KEY: replace-with-platform-secret
   STORAGE_DIR: /tmp

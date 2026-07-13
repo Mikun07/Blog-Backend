@@ -1,100 +1,170 @@
-This repository contains the backend code for a simple blog application built using PHP Laravel 9 with a MySQL database.
+# Blog Backend
 
-    Features
+Blog Backend is a Laravel API for a complete blog platform. It supports authenticated authors, published and draft posts, categories, tags, comments, and owner-only moderation.
 
-- User authentication (login and sign up)
-- CRUD operations for managing blog posts (Create, Read, Update, Delete)
+The project is a portfolio backend intended to demonstrate backend API design, database modeling, validation, authentication, and deployment readiness.
 
-    Setup Instructions.
+## Features
 
-1. Clone the Repository
-    git clone <backend-repo-url>
-    cd backend-folder-name
+- User registration, login, logout, and current user lookup
+- Laravel Sanctum bearer token authentication
+- Create, publish, archive, update, and delete blog posts
+- Public published post listing with search, category, tag, and pagination filters
+- Authenticated author dashboard listing for all own posts
+- Category creation and listing
+- Tag creation and listing
+- Guest and authenticated comment submission
+- Pending comment workflow
+- Owner-only comment approval, rejection, and deletion
+- Legacy endpoint compatibility for the original route names
 
-2. Install Dependencies
-    composer install
+## Technology Stack
 
-3. Configure Environment Variables
-    Create a .env file based on .env.example and set up your MySQL database credentials and other necessary configurations.
+- PHP 8.1 or newer
+- Laravel 10
+- Laravel Sanctum for API tokens
+- MySQL for local and deployed application data
+- PHPUnit for tests
+- Vite for Laravel asset compilation
+- Railway deployment configuration through `railway.toml`
 
-4. Run Migrations
-    php artisan migrate
+## Architecture Overview
 
+The application follows Laravel's MVC structure with Form Request validation.
 
-5. Start the Server
-    php artisan serve
+- `routes/api.php` defines public, authenticated, and legacy API routes.
+- `app/Http/Controllers/UserController.php` handles authentication.
+- `app/Http/Controllers/BlogController.php` handles blog publishing, filtering, comments, and moderation.
+- `app/Http/Controllers/CategoryController.php` handles category listing and creation.
+- `app/Http/Controllers/TagController.php` handles tag listing and creation.
+- `app/Http/Requests` contains request validation rules.
+- `app/Models/User.php` represents application users.
+- `app/Models/Blogs.php` represents blog posts.
+- `app/Models/Category.php`, `app/Models/Tag.php`, and `app/Models/Comment.php` represent supporting blog domain concepts.
+- `database/migrations` defines the application schema.
 
-6. Access API Endpoints
-    Use the configured API endpoints for CRUD operations on blog posts.
+The current design is a modular Laravel backend. Validation is separated into Form Request classes, while authorization checks are still handled in controllers. A future design pass should move ownership rules into Laravel policies.
 
-Additional Information
-    - This application uses PHP Laravel 9 as the backend framework with MySQL as the database.
-    - Ensure the frontend application is running and correctly configured to interact with the backend APIs.
+## Repository Structure
 
+```text
+app/
+  Http/Controllers/      API controllers
+  Http/Requests/         Request validation rules
+  Models/                Eloquent models
+config/                  Laravel configuration
+database/
+  factories/             Test factories
+  migrations/            Versioned database schema
+  seeders/               Seed entry point
+docs/                    Project engineering documentation
+routes/
+  api.php                API route definitions
+tests/                   PHPUnit test suites
+```
 
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+## Requirements
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+- PHP 8.1 or newer
+- Composer
+- MySQL 8 or compatible database
+- Node.js and npm, only needed when building frontend assets
 
-## About Laravel
+## Environment Variables
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Create `.env` from `.env.example` and update these values.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```env
+APP_NAME="Blog Backend"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=blog_backend
+DB_USERNAME=root
+DB_PASSWORD=
 
-## Learning Laravel
+LOG_CHANNEL=stack
+QUEUE_CONNECTION=sync
+SESSION_DRIVER=file
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Generate a local application key after creating `.env`.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+php artisan key:generate
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Never commit `.env`, database passwords, app keys, API tokens, or production credentials.
 
-## Laravel Sponsors
+## Local Setup
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
 
-### Premium Partners
+The API will be available at `http://127.0.0.1:8000/api`.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## Testing
 
-## Contributing
+Run the PHPUnit test suite.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+vendor/bin/phpunit
+```
 
-## Code of Conduct
+Composer scripts are also available:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+composer test
+composer test:coverage
+```
 
-## Security Vulnerabilities
+The test suite includes unit tests for model ownership and validation rules, plus feature tests for registration, publishing, owner-only edit and delete, comment moderation, guest comment validation, and invalid blog payloads.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Coverage is generated in CI on PHP 8.3 and uploaded as a `coverage.xml` artifact.
+
+## API Documentation
+
+API contracts are documented in [docs/API.md](docs/API.md).
+
+## Deployment
+
+Railway deployment notes are documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). The repository includes `railway.toml` because Railway's current config-as-code system reads `railway.toml` or `railway.json`.
+
+## Security Notes
+
+Current security considerations are documented in [SECURITY.md](SECURITY.md).
+
+## Engineering Readiness
+
+The project has been filed against the engineering framework in [docs/ENGINEERING_READINESS.md](docs/ENGINEERING_READINESS.md). That report records the current state, known risks, stop rules, and recommended build order.
+
+## Known Limitations
+
+- Authorization should be moved into Laravel policies or gates.
+- Existing legacy blog rows may need a backfill migration for `user_id`, `slug`, and publish status.
+- Existing deployed databases created before this upgrade may need a manual content column conversion to `text`.
+- Production logging, monitoring, backups, and incident handling are not yet complete.
+
+## Future Improvements
+
+- Expand API feature tests for authorization and moderation paths.
+- Add OpenAPI documentation.
+- Add rate-limit behavior tests for authentication routes.
+- Add author profile endpoints.
+- Add rich text or Markdown rendering support.
+- Add CI quality gates for PHPUnit and Laravel Pint.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is licensed under the [MIT License](LICENSE). Confirm the final copyright owner before publishing publicly.

@@ -1,8 +1,8 @@
 {
-    "name": "laravel/laravel",
+    "name": "portfolio/blog-backend",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Laravel API backend for a simple blog application.",
+    "keywords": ["laravel", "api", "backend", "blog"],
     "license": "MIT",
     "require": {
         "php": "^8.1",
@@ -45,6 +45,12 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
+        ],
+        "test": [
+            "@php vendor/bin/phpunit"
+        ],
+        "test:coverage": [
+            "@php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-text --coverage-clover coverage.xml"
         ]
     },
     "extra": {

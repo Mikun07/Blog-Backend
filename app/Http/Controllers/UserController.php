@@ -2,82 +2,75 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
-
 class UserController extends Controller
 {
-    //
-    function register(Request $req ) {
-        $user = new User;
-        $user->name = $req->input('name');
-        $user->username = $req->input('username');
-        $user->email = $req->input('email');
-        $user->password = Hash::make($req->input('password'));
-        $user->save();
-        return $user;
-    }
+    public function register(RegisterRequest $request)
+    {
+        $user = User::create([
+            'name' => $request->validated('name'),
+            'username' => $request->validated('username'),
+            'email' => $request->validated('email'),
+            'password' => Hash::make($request->validated('password')),
+        ]);
 
-    function login(Request $req) {
-        $email = $req->input('email');
-        $password = $req->input('password');
-        $user = User::where('email', $email)->first();
-    
-        // Check if user exists and verify password
-        if ($user && Hash::check($password, $user->password)) {
-            $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            $length = 24;
-    
-            $prefix = $user->username . '|';
-            $token = "";
-            
-            // Generating a string of at least 7 characters
-            while(strlen($token) < $length){
-                $token .= $characters[rand(0, strlen($characters) - 1)];
-            }
-            return response()->json([
-                "success" => true,
-                "message" => "Login Success",
-                "user" => $user,
-                "token" => $prefix.$token
-            ], 200);
-        }
-    
-        // If either email or password is incorrect, return error
         return response()->json([
-            "success" => false,
-            "message" => "Email or password is invalid",
-            "data" => null
-        ], 200);
+            'success' => true,
+            'message' => 'Registration successful.',
+            'data' => [
+                'user' => $user,
+                'token' => $user->createToken('api-token')->plainTextToken,
+            ],
+        ], 201);
     }
 
-    function getUser(Request $req) {
-        $userToken = $req->header('Authorization');
-        if($userToken == null || $userToken == '') {
+    public function login(LoginRequest $request)
+    {
+        $user = User::where('email', $request->validated('email'))->first();
+
+        if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
             return response()->json([
-                "success" => false,
-                "message" => "Invalid token/token not provided"
+                'success' => false,
+                'message' => 'Email or password is invalid.',
+                'data' => null,
             ], 401);
         }
-        $tokenParts = explode('|', $userToken);
 
-        $username = $tokenParts[0];
-        $token = $tokenParts[1];
-
-        $user = User::where("username", $username)->first();
-
-        if($user) return response()->json([
-            "success" => true, 
-            "message" => "User retrieved", 
-            "data" => $user
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful.',
+            'data' => [
+                'user' => $user,
+                'token' => $user->createToken('api-token')->plainTextToken,
+            ],
         ]);
-        else response()->json([
-            "success" => false,
-            "message" => "User not found",
-            "data" => null
+    }
+
+    public function logout(Request $request)
+    {
+        if ($request->user()?->currentAccessToken()) {
+            $request->user()->currentAccessToken()->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logout successful.',
+            'data' => null,
+        ]);
+    }
+
+    public function getUser(Request $request)
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'User retrieved.',
+            'data' => $request->user(),
         ]);
     }
 }

@@ -1,13 +1,19 @@
-name: update changelog
+name: Release Documentation Check
 
 on:
   release:
-    types: [released]
+    types: [published]
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
-  update:
-    permissions:
-      contents: write
-    uses: laravel/.github/.github/workflows/update-changelog.yml@main
+  changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify changelog exists
+        run: test -f CHANGELOG.md

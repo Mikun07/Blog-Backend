@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->string('title');
-            $table->string('content');
+            $table->text('content');
             $table->string('author');
-            $table->string('date');
+            $table->string('date')->nullable();
         });
     }
 

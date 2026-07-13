@@ -1,12 +1,16 @@
-name: issues
+name: Issue Hygiene
 
 on:
   issues:
-    types: [labeled]
+    types: [opened, edited]
 
 permissions:
-  issues: write
+  contents: read
 
 jobs:
-  help-wanted:
-    uses: laravel/.github/.github/workflows/issues.yml@main
+  acknowledge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Record issue event
+        run: echo "Issue event received for repository triage."
