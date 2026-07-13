@@ -6,6 +6,8 @@ use App\Models\Blogs;
 use App\Models\Comment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -71,6 +73,70 @@ class BlogApiTest extends TestCase
         $this->postJson("/api/blogs/{$blog->id}/comments", [
             'content' => 'This is a guest comment.',
         ])->assertStatus(422);
+    }
+
+    public function test_author_can_upload_cover_image_when_creating_blog(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->post('/api/blogs', [
+            'title' => 'Post With Cover Image',
+            'content' => 'This post has an uploaded cover image.',
+            'status' => Blogs::STATUS_DRAFT,
+            'cover_image' => $this->fakePng('cover.png'),
+        ], ['Accept' => 'application/json']);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('data.title', 'Post With Cover Image');
+
+        $coverImageUrl = $response->json('data.cover_image_url');
+
+        $this->assertIsString($coverImageUrl);
+        $this->assertStringContainsString('/storage/blog-images/', $coverImageUrl);
+        Storage::disk('public')->assertExists($this->storagePathFromUrl($coverImageUrl));
+    }
+
+    public function test_author_can_replace_uploaded_cover_image_and_delete_it_with_blog(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+        Storage::disk('public')->put('blog-images/old-cover.jpg', 'old image');
+
+        $blog = Blogs::create([
+            'user_id' => $user->id,
+            'title' => 'Image Update Post',
+            'slug' => 'image-update-post',
+            'content' => 'Image update content.',
+            'cover_image_url' => Storage::disk('public')->url('blog-images/old-cover.jpg'),
+            'author' => $user->username,
+            'status' => Blogs::STATUS_DRAFT,
+            'date' => now()->toDateString(),
+        ]);
+
+        $response = $this->patch("/api/blogs/{$blog->id}", [
+            'cover_image' => $this->fakePng('new-cover.png'),
+        ], ['Accept' => 'application/json']);
+
+        $response->assertOk();
+
+        $newCoverImageUrl = $response->json('data.cover_image_url');
+
+        $this->assertIsString($newCoverImageUrl);
+        $this->assertStringContainsString('/storage/blog-images/', $newCoverImageUrl);
+        Storage::disk('public')->assertMissing('blog-images/old-cover.jpg');
+        Storage::disk('public')->assertExists($this->storagePathFromUrl($newCoverImageUrl));
+
+        $this->deleteJson("/api/blogs/{$blog->id}")
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        Storage::disk('public')->assertMissing($this->storagePathFromUrl($newCoverImageUrl));
     }
 
     public function test_author_can_update_and_delete_own_blog(): void
@@ -179,5 +245,20 @@ class BlogApiTest extends TestCase
         ])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['title', 'content', 'status']);
+    }
+
+    private function storagePathFromUrl(string $url): string
+    {
+        $path = parse_url($url, PHP_URL_PATH) ?: $url;
+
+        return ltrim(preg_replace('#^.*?/storage/#', '', $path), '/');
+    }
+
+    private function fakePng(string $name): UploadedFile
+    {
+        return UploadedFile::fake()->createWithContent(
+            $name,
+            base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=')
+        );
     }
 }

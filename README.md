@@ -18,6 +18,7 @@ The project is a portfolio backend intended to demonstrate backend API design, d
 - Pending comment workflow
 - Owner-only comment approval, rejection, and deletion
 - Admin dashboard metrics, user role management, and global blog/comment moderation
+- Admin user creation, suspension, management, admin post creation, post inspection, and user history review
 - Legacy endpoint compatibility for the original route names
 
 ## Technology Stack
@@ -83,7 +84,11 @@ APP_ENV=local
 APP_KEY=
 APP_DEBUG=true
 APP_URL=http://localhost:8000
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173
+ADMIN_NAME="Ayomikun Olaleye"
+ADMIN_USERNAME=ayomikunolaleye
+ADMIN_EMAIL=ayomikunolaleye@gmail.com
+ADMIN_PASSWORD=
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -105,6 +110,21 @@ php artisan key:generate
 
 Never commit `.env`, database passwords, app keys, API tokens, or production credentials.
 
+## Admin Account
+
+The first admin account is provisioned by `Database\Seeders\AdminUserSeeder`. Set `ADMIN_PASSWORD` in `.env` or deployment environment variables before seeding. If the password contains special characters such as `#`, wrap it in quotes.
+
+```env
+ADMIN_EMAIL=ayomikunolaleye@gmail.com
+ADMIN_PASSWORD="your-secure-admin-password"
+```
+
+Then run the seed workflow.
+
+```bash
+php artisan db:seed
+```
+
 ## Local Setup
 
 ```bash
@@ -116,6 +136,29 @@ php artisan serve
 ```
 
 The API will be available at `http://127.0.0.1:8000/api`.
+
+## Optional Docker Setup
+
+Docker is not required for Railway deployment, but it is available for local development when you want PHP and MySQL isolated from your machine.
+
+```bash
+docker compose up --build -d
+docker compose exec app php artisan migrate
+```
+
+The API will be available at `http://127.0.0.1:8000/api`. The Compose MySQL service is exposed on `127.0.0.1:3307` with database `blog_backend`, username `blog_backend`, and password `blog_backend`.
+
+To seed the first admin user, set `ADMIN_PASSWORD` in `.env` and run:
+
+```bash
+docker compose exec app php artisan db:seed
+```
+
+Stop the local Docker stack with:
+
+```bash
+docker compose down
+```
 
 ## Testing
 
@@ -138,11 +181,13 @@ Coverage is generated in CI on PHP 8.3 and uploaded as a `coverage.xml` artifact
 
 ## API Documentation
 
-API contracts are documented in [docs/API.md](docs/API.md).
+API contracts are documented in [docs/API.md](docs/API.md). When the Laravel app is running, the API documentation page is available at `http://127.0.0.1:8000/docs/api`, and the raw OpenAPI JSON is available at `http://127.0.0.1:8000/docs/api/openapi.json`.
 
 ## Deployment
 
 Railway deployment notes are documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). The repository includes `railway.toml` because Railway's current config-as-code system reads `railway.toml` or `railway.json`.
+
+This backend should not be deployed as a Netlify static site. Netlify settings such as `npm run build` with publish directory `dist` are for frontend apps; this Laravel API runs on PHP and should be hosted on Railway or another PHP-capable backend platform.
 
 ## Security Notes
 
@@ -155,7 +200,7 @@ The project has been filed against the engineering framework in [docs/ENGINEERIN
 ## Known Limitations
 
 - Authorization should be moved into Laravel policies or gates.
-- The first admin account must be assigned directly in the database, seed data, or a future setup command.
+- `ADMIN_PASSWORD` must be configured before seed data can provision the first admin account.
 - Existing legacy blog rows may need a backfill migration for `user_id`, `slug`, and publish status.
 - Existing deployed databases created before this upgrade may need a manual content column conversion to `text`.
 - Production logging, monitoring, backups, and incident handling are not yet complete.
@@ -163,9 +208,9 @@ The project has been filed against the engineering framework in [docs/ENGINEERIN
 ## Future Improvements
 
 - Expand API feature tests for authorization and moderation paths.
-- Add OpenAPI documentation.
+- Keep OpenAPI documentation synchronized with API changes.
 - Add rate-limit behavior tests for authentication routes.
-- Add a first-admin setup command or seed workflow.
+- Add a first-admin setup command for interactive production provisioning.
 - Add author profile endpoints.
 - Add rich text or Markdown rendering support.
 - Add CI quality gates for PHPUnit and Laravel Pint.

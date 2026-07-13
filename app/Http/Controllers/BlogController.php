@@ -9,6 +9,8 @@ use App\Models\Blogs;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Tag;
+use App\Services\BlogImageService;
+use App\Services\BlogNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -94,10 +96,13 @@ class BlogController extends Controller
         ]);
     }
 
-    public function store(StoreBlogRequest $request)
+    public function store(StoreBlogRequest $request, BlogNotificationService $notifications, BlogImageService $images)
     {
         $status = $request->validated('status', Blogs::STATUS_DRAFT);
         $publishedAt = $this->publishedAt($request, $status);
+        $coverImageUrl = $request->hasFile('cover_image')
+            ? $images->store($request->file('cover_image'))
+            : $request->validated('cover_image_url');
 
         $blog = Blogs::create([
             'user_id' => $request->user()->id,
@@ -106,7 +111,7 @@ class BlogController extends Controller
             'slug' => $this->uniqueSlug($request->validated('title')),
             'excerpt' => $request->validated('excerpt'),
             'content' => $request->validated('content'),
-            'cover_image_url' => $request->validated('cover_image_url'),
+            'cover_image_url' => $coverImageUrl,
             'author' => $request->user()->username,
             'status' => $status,
             'date' => $request->validated('date') ?? optional($publishedAt)->toDateString() ?? now()->toDateString(),
@@ -114,6 +119,7 @@ class BlogController extends Controller
         ]);
 
         $this->syncTags($blog, $request->validated('tags') ?? []);
+        $notifications->notifyPublished($blog);
 
         return response()->json([
             'success' => true,
@@ -122,8 +128,12 @@ class BlogController extends Controller
         ], 201);
     }
 
-    public function update(UpdateBlogRequest $request, Blogs $blog)
-    {
+    public function update(
+        UpdateBlogRequest $request,
+        Blogs $blog,
+        BlogNotificationService $notifications,
+        BlogImageService $images
+    ) {
         if (! $blog->isOwnedBy($request->user())) {
             return response()->json([
                 'success' => false,
@@ -134,6 +144,12 @@ class BlogController extends Controller
 
         $status = $request->validated('status', $blog->status);
         $title = $request->validated('title', $blog->title);
+        $wasPublished = $blog->status === Blogs::STATUS_PUBLISHED;
+        $oldCoverImageUrl = $blog->cover_image_url;
+        $uploadedCoverImage = $request->file('cover_image');
+        $coverImageUrl = $uploadedCoverImage
+            ? $images->store($uploadedCoverImage)
+            : $request->validated('cover_image_url', $blog->cover_image_url);
 
         $publishedAt = $this->publishedAt($request, $status);
 
@@ -147,7 +163,7 @@ class BlogController extends Controller
             'slug' => $title !== $blog->title ? $this->uniqueSlug($title, $blog->id) : $blog->slug,
             'excerpt' => $request->validated('excerpt', $blog->excerpt),
             'content' => $request->validated('content', $blog->content),
-            'cover_image_url' => $request->validated('cover_image_url', $blog->cover_image_url),
+            'cover_image_url' => $coverImageUrl,
             'status' => $status,
             'date' => $request->validated('date', $blog->date),
             'published_at' => $request->has('published_at') || $request->has('status')
@@ -156,8 +172,16 @@ class BlogController extends Controller
         ]);
         $blog->save();
 
+        if ($uploadedCoverImage) {
+            $images->delete($oldCoverImageUrl);
+        }
+
         if ($request->has('tags')) {
             $this->syncTags($blog, $request->validated('tags') ?? []);
+        }
+
+        if (! $wasPublished && $blog->status === Blogs::STATUS_PUBLISHED) {
+            $notifications->notifyPublished($blog);
         }
 
         return response()->json([
@@ -167,7 +191,7 @@ class BlogController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, Blogs $blog)
+    public function destroy(Request $request, Blogs $blog, BlogImageService $images)
     {
         if (! $blog->isOwnedBy($request->user())) {
             return response()->json([
@@ -177,6 +201,7 @@ class BlogController extends Controller
             ], 403);
         }
 
+        $images->delete($blog->cover_image_url);
         $blog->delete();
 
         return response()->json([
@@ -274,14 +299,17 @@ class BlogController extends Controller
         ]);
     }
 
-    public function legacyUpdate(UpdateBlogRequest $request)
-    {
+    public function legacyUpdate(
+        UpdateBlogRequest $request,
+        BlogNotificationService $notifications,
+        BlogImageService $images
+    ) {
         $blog = Blogs::findOrFail($request->validated('id'));
 
-        return $this->update($request, $blog);
+        return $this->update($request, $blog, $notifications, $images);
     }
 
-    public function legacyDestroy(Request $request)
+    public function legacyDestroy(Request $request, BlogImageService $images)
     {
         $validated = $request->validate([
             'id' => ['required', 'integer', 'exists:blogs,id'],
@@ -289,7 +317,7 @@ class BlogController extends Controller
 
         $blog = Blogs::findOrFail($validated['id']);
 
-        return $this->destroy($request, $blog);
+        return $this->destroy($request, $blog, $images);
     }
 
     private function perPage(Request $request): int

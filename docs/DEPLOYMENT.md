@@ -6,6 +6,19 @@ The current deployment target is Railway.
 
 Railway's current config-as-code system reads `railway.toml` or `railway.json` by default. This repository uses `railway.toml` for deployment configuration.
 
+## Netlify Is Not The Backend Host
+
+Do not deploy this Laravel API backend as a Netlify static site. Netlify's default frontend settings often use:
+
+```text
+Build command: npm run build
+Publish directory: dist
+```
+
+That configuration fails for this repository because Laravel Vite builds frontend assets into `public/build`, not `dist`. Even if the publish directory is changed, Netlify static hosting will not run the PHP Laravel API or serve `/api/*` routes.
+
+Use Railway for this backend. If a separate frontend is hosted on Netlify, configure Netlify from the frontend repository instead, and point that frontend's API base URL to the Railway backend URL.
+
 ## Deployment Architecture
 
 Recommended Railway services:
@@ -58,6 +71,8 @@ builder = "RAILPACK"
 ```
 
 No custom `startCommand` is set so Railway can use its Laravel runtime defaults.
+
+The Docker files in this repository are for optional local development only. The current Railway deployment path should continue to use Railpack rather than a Docker image unless the deployment architecture changes.
 
 ## Migration Strategy
 

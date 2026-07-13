@@ -7,6 +7,7 @@ use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\StoreBlogRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\UpdateBlogRequest;
+use App\Http\Requests\UpdateProfileRequest;
 use PHPUnit\Framework\TestCase;
 
 class RequestValidationRulesTest extends TestCase
@@ -38,6 +39,7 @@ class RequestValidationRulesTest extends TestCase
         $this->assertRuleContains($rules, 'title', 'required');
         $this->assertRuleContains($rules, 'content', 'required');
         $this->assertRuleContains($rules, 'tags', 'array');
+        $this->assertRuleContains($rules, 'cover_image', 'image');
         $this->assertRuleContains($rules, 'published_at', 'date');
     }
 
@@ -48,6 +50,18 @@ class RequestValidationRulesTest extends TestCase
         $this->assertRuleContains($rules, 'id', 'exists:blogs,id');
         $this->assertRuleContains($rules, 'title', 'sometimes');
         $this->assertRuleContains($rules, 'content', 'sometimes');
+        $this->assertRuleContains($rules, 'cover_image', 'image');
+    }
+
+    public function test_update_profile_request_accepts_identity_and_password_fields(): void
+    {
+        $rules = (new UpdateProfileRequest())->rules();
+
+        $this->assertRuleContains($rules, 'name', 'sometimes');
+        $this->assertRuleContains($rules, 'username', 'alpha_dash');
+        $this->assertRuleContains($rules, 'email', 'email');
+        $this->assertRuleContains($rules, 'current_password', 'required_with:password');
+        $this->assertRuleContains($rules, 'password', 'min:8');
     }
 
     public function test_store_comment_request_requires_content(): void

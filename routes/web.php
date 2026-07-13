@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApiDocumentationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,3 +17,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/docs/api', [ApiDocumentationController::class, 'index'])->name('api.docs');
+Route::get('/docs/api/openapi.json', [ApiDocumentationController::class, 'openApi'])->name('api.docs.openapi');

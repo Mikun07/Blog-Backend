@@ -22,6 +22,7 @@ class StoreBlogRequest extends FormRequest
             'content' => ['required', 'string'],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'cover_image_url' => ['nullable', 'url', 'max:255'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'category_name' => ['nullable', 'string', 'max:100'],
             'tags' => ['nullable', 'array', 'max:10'],

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\UserController;
 use App\Support\RoutePaths;
@@ -24,7 +25,13 @@ Route::get('tags', [TagController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [UserController::class, 'getUser']);
+    Route::patch('auth/me', [UserController::class, 'updateProfile']);
     Route::post('auth/logout', [UserController::class, 'logout']);
+
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::patch('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::patch('notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
 
     Route::get('me/blogs', [BlogController::class, 'mine']);
     Route::post('blogs', [BlogController::class, 'store']);
@@ -49,8 +56,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('admin')->prefix('admin')->group(function () {
         Route::get('dashboard', [AdminController::class, 'dashboard']);
         Route::get('users', [AdminController::class, 'users']);
+        Route::post('users', [AdminController::class, 'createUser']);
+        Route::get('users/{user}', [AdminController::class, 'showUser']);
+        Route::get('users/{user}/history', [AdminController::class, 'userHistory']);
+        Route::patch('users/{user}', [AdminController::class, 'updateUser']);
+        Route::delete('users/{user}', [AdminController::class, 'deleteUser']);
         Route::patch('users/{user}/role', [AdminController::class, 'updateUserRole']);
+        Route::patch('users/{user}/status', [AdminController::class, 'updateUserStatus']);
         Route::get('blogs', [AdminController::class, 'blogs']);
+        Route::post('blogs', [AdminController::class, 'createBlog']);
+        Route::get(RoutePaths::BLOG, [AdminController::class, 'showBlog']);
         Route::patch(RoutePaths::BLOG . '/status', [AdminController::class, 'updateBlogStatus']);
         Route::delete(RoutePaths::BLOG, [AdminController::class, 'deleteBlog']);
         Route::get('comments', [AdminController::class, 'comments']);

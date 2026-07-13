@@ -32,7 +32,7 @@ The API supports three practical user groups and one elevated admin role.
 | Guest reader | Browse published posts, filter posts, view approved comments, and submit a guest comment with name and email. |
 | Authenticated reader | Use authenticated identity when interacting with protected endpoints. |
 | Author | Register, log in, create posts, manage own posts, create categories and tags, and moderate comments on own posts. |
-| Admin | View dashboard metrics, manage user roles, review all posts, update any post status, delete any post, review all comments, and moderate any comment. |
+| Admin | View dashboard metrics, create, suspend, reactivate, and manage users, review user history, create posts for users, inspect all posts, update any post status, delete any post, review all comments, and moderate any comment. |
 
 Protected author behavior is enforced through Sanctum authentication and ownership checks against the post owner. Admin behavior is enforced through the `admin` middleware, which checks the authenticated user's `role`.
 
@@ -42,7 +42,9 @@ Protected author behavior is enforced through Sanctum authentication and ownersh
 
 A user represents an account that can authenticate with email and password. Passwords are hashed through Laravel's hashing system, and authentication uses Laravel Sanctum personal access tokens. The API returns a bearer token after registration or login.
 
-Each user has a `username`, which is unique in the expanded schema. Each user also has a `role` of `author` or `admin`. The system keeps compatibility with the original project by retaining a legacy `author` text field on blog posts, while also adding `user_id` ownership.
+Each user has a `username`, which is unique in the expanded schema. Each user also has a `role` of `author` or `admin` and a `status` of `active` or `suspended`. Admins can create users, update profile details, reset passwords, change roles, suspend or reactivate accounts, inspect recent activity, review full user history, and delete other user accounts. Suspending a user revokes that user's API tokens and blocks future login. The API rejects changes that would remove the final active admin account and prevents an admin from deleting or suspending their own active account.
+
+The system keeps compatibility with the original project by retaining a legacy `author` text field on blog posts, while also adding `user_id` ownership.
 
 ### Blogs
 
@@ -100,7 +102,8 @@ The main controllers are:
 
 | Controller | Responsibility |
 | --- | --- |
-| `AdminController` | Dashboard metrics, user role management, global blog moderation, and global comment moderation. |
+| `AdminController` | Dashboard metrics, user management, user history, admin post creation and inspection, global blog moderation, and global comment moderation. |
+| `ApiDocumentationController` | Laravel-served API documentation page and OpenAPI JSON contract. |
 | `UserController` | Registration, login, logout, and current user lookup. |
 | `BlogController` | Public blog listing, post publishing, owner-only updates and deletion, comments, and moderation. |
 | `CategoryController` | Category listing and category creation. |
@@ -130,16 +133,17 @@ Primary endpoint groups:
 | --- | --- |
 | Health | `GET /api/health` |
 | Authentication | `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me` |
-| Admin | `GET /api/admin/dashboard`, `GET /api/admin/users`, `PATCH /api/admin/users/{id}/role`, `GET /api/admin/blogs`, `PATCH /api/admin/blogs/{id}/status`, `GET /api/admin/comments` |
+| Admin | `GET /api/admin/dashboard`, `GET /api/admin/users`, `POST /api/admin/users`, `PATCH /api/admin/users/{id}`, `DELETE /api/admin/users/{id}`, `PATCH /api/admin/users/{id}/status`, `GET /api/admin/users/{id}/history`, `GET /api/admin/blogs`, `POST /api/admin/blogs`, `GET /api/admin/blogs/{id}`, `PATCH /api/admin/blogs/{id}/status`, `GET /api/admin/comments` |
 | Blogs | `GET /api/blogs`, `GET /api/blogs/{slug-or-id}`, `POST /api/blogs`, `PATCH /api/blogs/{id}`, `DELETE /api/blogs/{id}` |
 | Author workspace | `GET /api/me/blogs` |
 | Categories | `GET /api/categories`, `POST /api/categories` |
 | Tags | `GET /api/tags`, `POST /api/tags` |
 | Comments | `GET /api/blogs/{id}/comments`, `POST /api/blogs/{id}/comments`, `PATCH /api/comments/{id}`, `DELETE /api/comments/{id}` |
+| Documentation | `GET /docs/api`, `GET /docs/api/openapi.json` |
 
 The repository also keeps the original route names, such as `/api/addBlog`, `/api/listBlogs`, `/api/editBlog`, and `/api/deleteBlog`, so older clients have a migration path.
 
-The complete endpoint documentation is maintained in `docs/API.md`.
+The complete endpoint documentation is maintained in `docs/API.md`. A machine-readable OpenAPI contract is maintained in `docs/openapi.json` and served by Laravel at `/docs/api/openapi.json`. A browser-readable documentation page is served at `/docs/api`.
 
 ## Security Model
 
@@ -147,14 +151,14 @@ Authentication uses Laravel Sanctum bearer tokens. Registration and login issue 
 
 Passwords are stored as hashes. User serialization hides password and remember token fields. Comment serialization hides `author_email` so reader email addresses are not exposed through public responses.
 
-Request validation is enforced through Form Request classes and Laravel validation. Blog ownership is enforced by comparing the authenticated user against the post's `user_id` and, for legacy records, the post's `author` field. Admin routes require both Sanctum authentication and the `admin` middleware.
+Request validation is enforced through Form Request classes and Laravel validation. Blog ownership is enforced by comparing the authenticated user against the post's `user_id` and, for legacy records, the post's `author` field. Admin routes require both Sanctum authentication and the `admin` middleware. Admin user-management actions include guardrails for final-active-admin protection, self-deletion prevention, and self-suspension prevention.
 
 CORS is configured through `CORS_ALLOWED_ORIGINS`, which allows development and production frontend origins to be controlled through environment variables rather than hardcoded in application logic.
 
 Current security gaps are documented rather than hidden:
 
 - Authorization checks should be moved from controllers into Laravel policies.
-- First-admin setup should be moved into a controlled setup command or deployment seed.
+- First-admin setup is seed-based and should eventually move into a controlled setup command or audited deployment workflow.
 - Existing legacy rows may need a data backfill for ownership, slugs, and publishing fields.
 - Rate-limit thresholds should be reviewed after real traffic patterns are known.
 - Production monitoring, alerting, and incident response procedures are not complete.
@@ -170,7 +174,8 @@ Current automated tests cover:
 | Unit model tests | Blog ownership, status constants, fillable blog fields, and hidden comment email fields. |
 | Unit request tests | Validation rule definitions for register, login, blog creation, blog update, and comments. |
 | Feature API tests | Registration, publishing, public blog listing, owner-only update and delete, non-owner rejection, comment moderation, guest comment validation, and invalid blog payload validation. |
-| Admin feature tests | Admin dashboard access, role promotion, last-admin protection, global blog status changes, and global comment moderation. |
+| Admin feature tests | Admin dashboard access, user creation, user update, user suspension, suspended-login blocking, user deletion guardrails, user history, admin post creation and inspection, role promotion, final-active-admin protection, global blog status changes, and global comment moderation. |
+| Documentation tests | Laravel-served API documentation page and OpenAPI JSON contract. |
 | Smoke tests | Root application response coverage retained from the Laravel application layout. |
 
 GitHub Actions runs the test suite on PHP 8.1, 8.2, and 8.3. A separate coverage job runs on PHP 8.3 with Xdebug enabled, generates Clover coverage as `coverage.xml`, uploads the artifact, and writes a statement coverage summary into the GitHub Actions job summary.
@@ -179,17 +184,17 @@ The current executable test distribution is:
 
 | Test Type | Test Methods | Percentage of Test Suite |
 | --- | ---: | ---: |
-| Unit tests | 12 | 48.00% |
-| Feature tests | 13 | 52.00% |
-| Total | 25 | 100% |
+| Unit tests | 12 | 30.77% |
+| Feature tests | 27 | 69.23% |
+| Total | 39 | 100% |
 
-Measured by PHP lines in this repository, tests currently represent 23.75 percent of the combined application and test PHP code:
+Measured by project-owned PHP in `app` and `routes`, tests currently represent 27.39 percent of the combined application-route and test PHP code:
 
 | Code Area | Lines | Percentage |
 | --- | ---: | ---: |
-| Application PHP | 1,339 | 76.25% |
-| Test PHP | 417 | 23.75% |
-| Total measured PHP | 1,756 | 100% |
+| Application and route PHP | 2,123 | 72.61% |
+| Test PHP | 801 | 27.39% |
+| Total measured PHP | 2,924 | 100% |
 
 The project currently collects code coverage in CI but does not enforce a minimum coverage threshold. The next quality step is to inspect the first stable CI coverage result and then set a realistic threshold.
 
@@ -209,21 +214,25 @@ The health check path is `/api/health`, which returns a small JSON response and 
 
 Operational configuration is documented in `docs/DEPLOYMENT.md`, including required Railway variables, migration behavior, logging recommendations, rollback notes, and production readiness gaps.
 
+Docker is available as an optional local development workflow. The Docker setup provides a PHP application container and MySQL service through `docker-compose.yml`, but Railway deployment remains configured for Railpack rather than Docker image deployment.
+
 ## Project Metrics
 
 The following figures describe the repository at the time this overview was drafted.
 
 | Metric | Value |
 | --- | --- |
-| Application PHP files | 34 |
-| Lines of application PHP | 1,339 |
-| Test files | 7 |
-| Lines of test PHP | 417 |
-| Automated test methods | 25 |
-| Unit test methods | 12, 48.00% of test suite |
-| Feature test methods | 13, 52.00% of test suite |
-| Test PHP share | 23.75% of measured PHP code |
-| API route declarations | 40 |
+| Application and route PHP files | 40 |
+| Lines of application and route PHP | 2,123 |
+| Test files | 9 |
+| Lines of test PHP | 801 |
+| Automated test methods | 39 |
+| Unit test methods | 12, 30.77% of test suite |
+| Feature test methods | 27, 69.23% of test suite |
+| Test PHP share | 27.39% of measured PHP code |
+| API route declarations | 48 |
+| Admin API route declarations | 17 |
+| Documentation routes | 2 |
 | Runtime package entries | 5 |
 | Development package entries | 7 |
 
@@ -237,7 +246,7 @@ Known limitations:
 
 - Blog and comment authorization should be moved into Laravel policies.
 - Admin authorization should be moved into policies or dedicated authorization classes.
-- First-admin setup should be implemented through a command, seed, or documented deployment workflow.
+- First-admin setup is seed-driven and should eventually become a dedicated command or audited deployment workflow.
 - API responses should be normalized through Laravel API resources.
 - Existing deployed databases may need a backfill for `user_id`, `slug`, `status`, and `published_at`.
 - Previously deployed databases should be checked to confirm that blog content uses text storage.
@@ -252,6 +261,7 @@ The documentation set includes:
 
 - `README.md` for setup, features, and repository orientation.
 - `docs/API.md` for API contracts.
+- `docs/openapi.json` for the machine-readable OpenAPI contract served by Laravel.
 - `docs/DEPLOYMENT.md` for Railway deployment and operations.
 - `docs/ENGINEERING_READINESS.md` for framework-based readiness assessment.
 - `SECURITY.md` for security limitations and roadmap.

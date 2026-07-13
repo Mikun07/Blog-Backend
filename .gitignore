@@ -12,8 +12,10 @@
 Homestead.json
 Homestead.yaml
 auth.json
+composer.phar
 npm-debug.log
 yarn-error.log
+backend-server*.log
 /.fleet
 /.idea
 /.vscode
